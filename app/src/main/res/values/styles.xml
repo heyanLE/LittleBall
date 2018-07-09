@@ -1,0 +1,29 @@
+<resources>
+
+    <style name="AppTheme" parent="Base.AppTheme">
+        <!-- Customize your theme here. -->
+    </style>
+    <!-- Base application theme. -->
+    <style name="Base.AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="MyTabLayout" parent="Widget.Design.TabLayout">
+        <item name="tabIndicatorColor">#FF4081</item>
+    </style>
+
+    <style name="WindowsAnimationVertical" parent="@android:style/Animation.Translucent">
+        <item name="android:windowEnterAnimation">@anim/service_main_window_anim_up_vertical</item>
+        <item name="android:windowExitAnimation">@anim/service_main_window_anim_down_vertical</item>
+    </style>
+
+    <style name="WindowsAnimationHorizontal" parent="@android:style/Animation.Translucent">
+        <item name="android:windowEnterAnimation">@anim/service_main_window_anim_up_horizontal</item>
+        <item name="android:windowExitAnimation">@anim/service_main_window_anim_down_horizontal</item>
+    </style>
+
+</resources>
