@@ -1,10 +1,9 @@
 package cn.heyanle.littleball.services;
 
+import android.annotation.SuppressLint;
 import android.app.Application;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Configuration;
-import android.graphics.Color;
 import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.Handler;
@@ -16,24 +15,19 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
-
-import com.tencent.bugly.crashreport.CrashReport;
 
 import cn.heyanle.littleball.R;
 import cn.heyanle.littleball.plugin.IntLittleBall;
 import cn.heyanle.littleball.plugin.data.Face;
-import cn.heyanle.littleball.pluginer.PluginLoader;
 import cn.heyanle.littleball.pluginer.PluginManager;
 import cn.heyanle.littleball.utils.HeLog;
 import cn.heyanle.littleball.view.ArcView;
 
-public class NotificationService extends NotificationListenerService implements IntLittleBall{
+public class NotificationService extends NotificationListenerService implements IntLittleBall {
 
 
-    PluginManager manager;
+    PluginManager pluginManager;
 
     private boolean nowDirection = true;
     private boolean isWindow = false;
@@ -82,15 +76,16 @@ public class NotificationService extends NotificationListenerService implements 
 
         nowDirection = !(xPixels > yPixels);
 
-        widthPixels = Math.min(xPixels,yPixels);
-        heightPixels = Math.min(yPixels,xPixels);
+        widthPixels = Math.min(xPixels, yPixels);
+        heightPixels = Math.min(yPixels, xPixels);
 
         initView();
 
         showView();
-
-        manager = new PluginLoader(this).loadInfo().loadPlugin(this);
-
+        pluginManager = new PluginManager(this);
+        pluginManager.checkPlugin();
+        pluginManager.loadPlugin();
+        pluginManager.onLoad(this);
     }
 
     @Override
@@ -114,62 +109,63 @@ public class NotificationService extends NotificationListenerService implements 
 
     }
 
-    private void showView(){
-        try{
-            windowManager.addView(cardView,layoutParams);
-        }catch (Exception e){
+    private void showView() {
+        try {
+            windowManager.addView(cardView, layoutParams);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void dismissView(){
+    private void dismissView() {
         try {
             windowManager.removeView(cardView);
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void showWindow(){
-        try{
+    private void showWindow() {
+        try {
             if (!nowDirection) arcView.setVisibility(View.GONE);
             else arcView.setVisibility(View.VISIBLE);
-            windowManager.addView(windowView,layoutParamsWindow);
-        }catch (Exception e){
+            windowManager.addView(windowView, layoutParamsWindow);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void dismissWindow(){
+    private void dismissWindow() {
         try {
             windowManager.removeView(windowView);
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
 
-    private void updateView(){
+    private void updateView() {
 
         try {
             layoutParams.width = ballSize;
             layoutParams.height = ballSize;
-            cardView.setRadius(ballSize/2);
-            layoutParams.x = (int)x;
-            layoutParams.y = (int)y;
-            windowManager.updateViewLayout(cardView,layoutParams);
-        }catch (Exception e){
+            cardView.setRadius(ballSize / 2);
+            layoutParams.x = (int) x;
+            layoutParams.y = (int) y;
+            windowManager.updateViewLayout(cardView, layoutParams);
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
 
     }
 
-    private void initView(){
+    @SuppressLint("ClickableViewAccessibility")
+    private void initView() {
         layoutParams.windowAnimations = android.R.style.Animation_Translucent;
 
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             layoutParams.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
         else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
             layoutParams.type = WindowManager.LayoutParams.TYPE_PHONE;
@@ -182,7 +178,7 @@ public class NotificationService extends NotificationListenerService implements 
         layoutParams.gravity = Gravity.START | Gravity.TOP;
 
         cardView = new CardView(this);
-        cardView.setRadius(ballSize/2);
+        cardView.setRadius(ballSize / 2);
         cardView.setElevation(20);
 
         cardView.setOnClickListener(new View.OnClickListener() {
@@ -198,7 +194,7 @@ public class NotificationService extends NotificationListenerService implements 
         cardView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch (motionEvent.getAction()){
+                switch (motionEvent.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         touchX = motionEvent.getX();
                         touchY = motionEvent.getY();
@@ -208,7 +204,7 @@ public class NotificationService extends NotificationListenerService implements 
                             public void run() {
                                 isTouch = true;
                             }
-                        },1000);
+                        }, 1000);
 
                         break;
                     case MotionEvent.ACTION_MOVE:
@@ -221,8 +217,8 @@ public class NotificationService extends NotificationListenerService implements 
                         x = (motionEvent.getRawX() - touchX);
                         y = (motionEvent.getRawY() - touchY - high);
 
-                        HeLog.i("layoutParams.x",layoutParams.x + "",this);
-                        HeLog.i("layoutParams.y",layoutParams.y + "",this);
+                        HeLog.i("layoutParams.x", layoutParams.x + "", this);
+                        HeLog.i("layoutParams.y", layoutParams.y + "", this);
 
                         updateView();
 
@@ -231,8 +227,8 @@ public class NotificationService extends NotificationListenerService implements 
                         break;
                     case MotionEvent.ACTION_UP:
 
-                        pX = layoutParams.x/xPixels;
-                        pY = layoutParams.y/yPixels;
+                        pX = layoutParams.x / xPixels;
+                        pY = layoutParams.y / yPixels;
 
                         if (isTouch) {
                             isTouch = false;
@@ -244,7 +240,7 @@ public class NotificationService extends NotificationListenerService implements 
         });
 
         LayoutInflater inflater = LayoutInflater.from(getApplication());
-        windowView = (LinearLayout) inflater.inflate(R.layout.service_main_windows,null);
+        windowView = (LinearLayout) inflater.inflate(R.layout.service_main_windows, null);
         windowView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -255,7 +251,7 @@ public class NotificationService extends NotificationListenerService implements 
         layoutParamsWindow.windowAnimations = R.style.WindowsAnimationVertical;
 
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             layoutParamsWindow.type = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
         else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
             layoutParamsWindow.type = WindowManager.LayoutParams.TYPE_PHONE;
@@ -263,13 +259,13 @@ public class NotificationService extends NotificationListenerService implements 
         layoutParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 
         layoutParamsWindow.format = PixelFormat.RGBA_8888;
-        layoutParamsWindow.width = (int)widthPixels;
-        layoutParamsWindow.height = (int)(widthPixels + 100);
+        layoutParamsWindow.width = (int) widthPixels;
+        layoutParamsWindow.height = (int) (widthPixels + 100);
         layoutParamsWindow.gravity = Gravity.CENTER | Gravity.BOTTOM;
 
         arcView = windowView.findViewById(R.id.service_main_arcView);
         arcView.getLayoutParams().height = 100;
-        arcView.getLayoutParams().width = (int)widthPixels;
+        arcView.getLayoutParams().width = (int) widthPixels;
 
         windowContentView = windowView.findViewById(R.id.service_main_content);
         windowContentView.getLayoutParams().width = (int) widthPixels;

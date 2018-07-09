@@ -2,17 +2,17 @@ package cn.heyanle.littleball.services.page;
 
 import android.widget.FrameLayout;
 
-import cn.heyanle.littleball.plugin.LittleBallPlugin;
+import cn.heyanle.littleball.plugin.tmp.Plugin;
 
 public class Page {
 
-    LittleBallPlugin plugin;
+    Plugin plugin;
 
     FrameLayout rootView ;
 
     boolean isFirstVisibility = false;
 
-    public Page(LittleBallPlugin plugin){
+    public Page(Plugin plugin){
         this.plugin = plugin;
         rootView = plugin.getRootView();
     }
